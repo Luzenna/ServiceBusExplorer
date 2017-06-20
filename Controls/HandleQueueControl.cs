@@ -606,9 +606,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             try
             {
-                ControlHelper.SuspendDrawing(mainTabControl);
+                mainTabControl.SuspendDrawing();
                 mainTabControl.SuspendLayout();
-                ControlHelper.SuspendDrawing(tabPageSessions);
+                tabPageSessions.SuspendDrawing();
                 tabPageSessions.SuspendLayout();
 
                 var queueClient = serviceBusHelper.MessagingFactory.CreateQueueClient(queueDescription.Path,
@@ -653,9 +653,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             finally
             {
                 mainTabControl.ResumeLayout();
-                ControlHelper.ResumeDrawing(mainTabControl);
+                mainTabControl.ResumeDrawing();
                 tabPageSessions.ResumeLayout();
-                ControlHelper.ResumeDrawing(tabPageSessions);
+                tabPageSessions.ResumeDrawing();
                 Cursor.Current = Cursors.Default;
             }
         }
@@ -1355,8 +1355,8 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             btnChangeStatus.Visible = true;
             btnMessages.Visible = true;
             btnSessions.Visible = queueDescription.RequiresSession;
-            btnMessages.Visible = string.IsNullOrWhiteSpace(queueDescription.ForwardTo);
-            btnDeadletter.Visible = string.IsNullOrWhiteSpace(queueDescription.ForwardDeadLetteredMessagesTo);
+            //btnMessages.Visible = string.IsNullOrWhiteSpace(queueDescription.ForwardTo);
+            //btnDeadletter.Visible = string.IsNullOrWhiteSpace(queueDescription.ForwardDeadLetteredMessagesTo);
 
             if (btnMessages.Visible && !btnSessions.Visible && !buttonsMoved)
             {
@@ -1435,7 +1435,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                 },
                 new[] {MessageCount, queueDescription.MessageCount.ToString("N0", CultureInfo.CurrentCulture)}
             });
-
+            
             propertyListView.Items.Clear();
             foreach (var array in propertyList)
             {
@@ -1578,9 +1578,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             try
             {
-                ControlHelper.SuspendDrawing(mainTabControl);
+                mainTabControl.SuspendDrawing();
                 mainTabControl.SuspendLayout();
-                ControlHelper.SuspendDrawing(tabPageMessages);
+                tabPageMessages.SuspendDrawing();
                 tabPageMessages.SuspendLayout();
 
                 Cursor.Current = Cursors.WaitCursor;
@@ -1636,7 +1636,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
                         var enumerable = messages as BrokeredMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Count();
+                        retrieved = enumerable.Length;
                         if (retrieved == 0)
                         {
                             continue;
@@ -1667,10 +1667,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
 
                 if (!peek)
                 {
-                    if (OnRefresh != null)
-                    {
-                        OnRefresh();
-                    }
+                    OnRefresh?.Invoke();
                 }
                 if (mainTabControl.TabPages[MessagesTabPage] == null)
                 {
@@ -1698,9 +1695,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             finally
             {
                 mainTabControl.ResumeLayout();
-                ControlHelper.ResumeDrawing(mainTabControl);
+                mainTabControl.ResumeDrawing();
                 tabPageMessages.ResumeLayout();
-                ControlHelper.ResumeDrawing(tabPageMessages);
+                tabPageMessages.ResumeDrawing();
                 Cursor.Current = Cursors.Default;
             }
         }
@@ -1780,10 +1777,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                     messagesCustomPropertiesSplitContainer.Size.Width/2 - 8;
                 if (!peek)
                 {
-                    if (OnRefresh != null)
-                    {
-                        OnRefresh();
-                    }
+                    OnRefresh?.Invoke();
                 }
                 if (mainTabControl.TabPages[MessagesTabPage] == null)
                 {
@@ -1830,7 +1824,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                             ? MainForm.SingletonMainForm.TopCount
                             : count - totalRetrieved);
                         var enumerable = messages as BrokeredMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Count();
+                        retrieved = enumerable.Length;
                         if (retrieved == 0)
                         {
                             continue;
@@ -1854,7 +1848,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
                         var enumerable = messages as BrokeredMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Count();
+                        retrieved = enumerable.Length;
                         if (retrieved == 0)
                         {
                             continue;
@@ -1981,7 +1975,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                                 : count - totalRetrieved,
                             TimeSpan.FromSeconds(MainForm.SingletonMainForm.ReceiveTimeout));
                         var enumerable = messages as BrokeredMessage[] ?? messages.ToArray();
-                        retrieved = enumerable.Count();
+                        retrieved = enumerable.Length;
                         if (retrieved == 0)
                         {
                             continue;
@@ -2251,7 +2245,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                         return;
                     }
 
-                    if (String.Equals(txtPath.Text.Trim(), txtForwardTo.Text.Trim(),
+                    if (string.Equals(txtPath.Text.Trim(), txtForwardTo.Text.Trim(),
                         StringComparison.CurrentCultureIgnoreCase))
                     {
                         writeToLog(CannotForwardToItself);
@@ -2259,7 +2253,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                         return;
                     }
 
-                    if (String.Equals(txtPath.Text.Trim(), txtForwardDeadLetteredMessagesTo.Text.Trim(),
+                    if (string.Equals(txtPath.Text.Trim(), txtForwardDeadLetteredMessagesTo.Text.Trim(),
                         StringComparison.CurrentCultureIgnoreCase))
                     {
                         writeToLog(CannotForwardDeadLetteredMessagesToItself);
@@ -2601,12 +2595,12 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
 
         private void HandleException(Exception ex)
         {
-            if (ex == null || string.IsNullOrWhiteSpace(ex.Message))
+            if (string.IsNullOrWhiteSpace(ex?.Message))
             {
                 return;
             }
             writeToLog(string.Format(CultureInfo.CurrentCulture, ExceptionFormat, ex.Message));
-            if (ex.InnerException != null && !string.IsNullOrWhiteSpace(ex.InnerException.Message))
+            if (!string.IsNullOrWhiteSpace(ex.InnerException?.Message))
             {
                 writeToLog(string.Format(CultureInfo.CurrentCulture, InnerExceptionFormat, ex.InnerException.Message));
             }
@@ -2640,16 +2634,13 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             if (btnCancelUpdate.Text == CancelText)
             {
-                if (OnCancel != null)
-                {
-                    OnCancel();
-                }
+                OnCancel?.Invoke();
             }
             else
             {
                 try
                 {
-                    if (String.Equals(txtPath.Text.Trim(), txtForwardTo.Text.Trim(),
+                    if (string.Equals(txtPath.Text.Trim(), txtForwardTo.Text.Trim(),
                         StringComparison.CurrentCultureIgnoreCase))
                     {
                         writeToLog(CannotForwardToItself);
@@ -3319,38 +3310,35 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                 return;
             }
             var dataGridView = sender as DataGridView;
-            if (dataGridView == null)
+            if (dataGridView == null || dataGridView.ColumnCount == 0)
             {
                 return;
             }
             try
             {
-                if (dataGridView.ColumnCount == 0)
-                {
-                    return;
-                }
                 dataGridView.SuspendDrawing();
                 dataGridView.SuspendLayout();
                 if (dataGridView.Columns.Count == 2)
                 {
                     var width = dataGridView.Width - dataGridView.Columns[0].Width - dataGridView.RowHeadersWidth;
                     var verticalScrollbar = dataGridView.Controls.OfType<VScrollBar>().First();
-                    if (verticalScrollbar.Visible)
+                    if (verticalScrollbar != null && verticalScrollbar.Visible)
                     {
                         width -= verticalScrollbar.Width;
                     }
                     dataGridView.Columns[1].Width = width;
                 }
-                if (dataGridView == messagesDataGridView ||
+                if ((dataGridView == messagesDataGridView ||
                     dataGridView == deadletterDataGridView ||
-                    dataGridView == transferDeadletterDataGridView)
+                    dataGridView == transferDeadletterDataGridView) &&
+                    dataGridView.ColumnCount == 6)
                 {
                     var width = dataGridView.Width -
                                 dataGridView.RowHeadersWidth -
                                 dataGridView.Columns[1].Width -
                                 dataGridView.Columns[2].Width;
                     var verticalScrollbar = dataGridView.Controls.OfType<VScrollBar>().First();
-                    if (verticalScrollbar.Visible)
+                    if (verticalScrollbar != null && verticalScrollbar.Visible)
                     {
                         width -= verticalScrollbar.Width;
                     }
@@ -3360,11 +3348,15 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                     dataGridView.Columns[4].Width = columnWidth + (width - (columnWidth*4)) + 10;
                     dataGridView.Columns[5].Width = columnWidth + 10;
                 }
-                if (dataGridView == sessionsDataGridView)
+                if (dataGridView != sessionsDataGridView || 
+                    dataGridView.ColumnCount != 4)
+                {
+                    return;
+                }
                 {
                     var width = dataGridView.Width - dataGridView.RowHeadersWidth;
                     var verticalScrollbar = dataGridView.Controls.OfType<VScrollBar>().First();
-                    if (verticalScrollbar.Visible)
+                    if (verticalScrollbar != null && verticalScrollbar.Visible)
                     {
                         width -= verticalScrollbar.Width;
                     }
@@ -3614,7 +3606,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             try
             {
-                ControlHelper.SuspendDrawing(authorizationRulesDataGridView);
+                authorizationRulesDataGridView.SuspendDrawing();
                 authorizationRulesDataGridView.SuspendLayout();
                 if (authorizationRulesDataGridView.Columns["IssuerName"] == null ||
                     authorizationRulesDataGridView.Columns["ClaimType"] == null ||
@@ -3634,7 +3626,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                             authorizationRulesDataGridView.Columns["Listen"].Width -
                             authorizationRulesDataGridView.Columns["Revision"].Width -
                             authorizationRulesDataGridView.RowHeadersWidth;
-                var verticalScrollbar = Enumerable.OfType<VScrollBar>(authorizationRulesDataGridView.Controls).First();
+                var verticalScrollbar = authorizationRulesDataGridView.Controls.OfType<VScrollBar>().First();
                 if (verticalScrollbar.Visible)
                 {
                     width -= verticalScrollbar.Width;
@@ -3666,7 +3658,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             finally
             {
                 authorizationRulesDataGridView.ResumeLayout();
-                ControlHelper.ResumeDrawing(authorizationRulesDataGridView);
+                authorizationRulesDataGridView.ResumeDrawing();
             }
         }
 
@@ -3735,8 +3727,8 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                 otherColumnsWidth += dataPointDataGridView.Columns[i].Width;
             }
             var width = dataPointDataGridView.Width - dataPointDataGridView.RowHeadersWidth - otherColumnsWidth;
-            var verticalScrollbar = Enumerable.OfType<VScrollBar>(dataPointDataGridView.Controls).First();
-            if (verticalScrollbar.Visible)
+            var verticalScrollbar = dataPointDataGridView.Controls.OfType<VScrollBar>().First();
+            if (verticalScrollbar != null && verticalScrollbar.Visible)
             {
                 width -= verticalScrollbar.Width;
             }
@@ -3799,9 +3791,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                 }
                 if (metricTabPageIndexList.Count > 0)
                 {
-                    for (var i = 0; i < metricTabPageIndexList.Count; i++)
+                    foreach (var t in metricTabPageIndexList)
                     {
-                        mainTabControl.TabPages.RemoveByKey(metricTabPageIndexList[i]);
+                        mainTabControl.TabPages.RemoveByKey(t);
                     }
                     metricTabPageIndexList.Clear();
                 }
@@ -4073,7 +4065,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                 {
                     return;
                 }
-                using (var form = new MessageForm(Enumerable.Cast<DataGridViewRow>(messagesDataGridView.SelectedRows)
+                using (var form = new MessageForm(messagesDataGridView.SelectedRows.Cast<DataGridViewRow>()
                     .Select(r => (BrokeredMessage) r.DataBoundItem), serviceBusHelper, writeToLog))
                 {
                     form.ShowDialog();
@@ -4229,7 +4221,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             finally
             {
                 messagesDataGridView.ResumeLayout();
-                ControlHelper.ResumeDrawing(messagesDataGridView);
+                messagesDataGridView.ResumeDrawing();
             }
         }
 
@@ -4237,7 +4229,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             try
             {
-                ControlHelper.SuspendDrawing(deadletterDataGridView);
+                deadletterDataGridView.SuspendDrawing();
                 deadletterDataGridView.SuspendLayout();
                 if (deadletterBindingList == null)
                 {
@@ -4294,7 +4286,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             finally
             {
                 deadletterDataGridView.ResumeLayout();
-                ControlHelper.ResumeDrawing(deadletterDataGridView);
+                deadletterDataGridView.ResumeDrawing();
             }
         }
 
@@ -4362,9 +4354,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
         {
             try
             {
-                if (disposing && (components != null))
+                if (disposing)
                 {
-                    components.Dispose();
+                    components?.Dispose();
                 }
 
                 for (var i = 0; i < Controls.Count; i++)
@@ -4431,7 +4423,7 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
                     return;
                 }
                 var messages =
-                    Enumerable.Cast<DataGridViewRow>(messagesDataGridView.SelectedRows)
+                    messagesDataGridView.SelectedRows.Cast<DataGridViewRow>()
                         .Select(r => r.DataBoundItem as BrokeredMessage);
                 IEnumerable<BrokeredMessage> brokeredMessages = messages as BrokeredMessage[] ?? messages.ToArray();
                 if (!brokeredMessages.Any())
@@ -4643,9 +4635,9 @@ namespace Microsoft.Azure.ServiceBusExplorer.Controls
             {
                 return;
             }
-            for (var i = 0; i < metricTabPageIndexList.Count; i++)
+            foreach (string t in metricTabPageIndexList)
             {
-                mainTabControl.TabPages.RemoveByKey(metricTabPageIndexList[i]);
+                mainTabControl.TabPages.RemoveByKey(t);
             }
             metricTabPageIndexList.Clear();
             btnCloseTabs.Enabled = false;
